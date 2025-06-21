@@ -8,9 +8,7 @@ import booksRouter from './routers/books.mjs';
 import authentication from './routers/auth.mjs';
 import ordersRouter from './routers/orders.mjs';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
 import bodyParser from 'body-parser';
-import MongoStore from 'connect-mongo';
 import dotenv from 'dotenv';
 
 dotenv.config()
@@ -34,23 +32,6 @@ app.options('*', cors(corsOptions)); // ✅ Handle preflight requests
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
-
-// ✅ 3. Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || "dwkqjqiojkm",
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.URI,
-    ttl: 14 * 24 * 60 * 60 // 14 days
-  }),
-  cookie: {
-    secure: true, // Required for HTTPS
-    sameSite: 'none', // Required for cross-origin cookies
-    httpOnly: true,
-    maxAge: 14 * 24 * 60 * 60 * 1000
-  }
-}));
 
 // ✅ 4. Routers (After session & CORS)
 app.use(authentication);
@@ -76,7 +57,7 @@ connectDb()
 
 
 app.get('/', (req, res) => {
- 
+
   res.send('home ');
 });
 

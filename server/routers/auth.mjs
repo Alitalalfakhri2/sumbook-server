@@ -7,6 +7,7 @@ import GoogleUser from '../shemas/GoogleUser.mjs'
 import bcrypt from 'bcrypt'; // Import bcrypt for password hashing
 import dotenv from 'dotenv';
 import cors from "cors";
+import jwt from 'jsonwebtoken'; // Import jsonwebtoken
 dotenv.config();
 
 const router = express.Router();
@@ -25,6 +26,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Function to generate JWT
+const generateToken = (user) => {
+  const payload = {
+    uid: user.uid,
+    email: user.email,
+    type: user.type,
+  };
+
+  const secretKey = process.env.JWT_SECRET_KEY || 'your-default-secret-key'; // Use a strong, randomly generated secret key
+  const options = {
+    expiresIn: '1h', // Token expiration time
+  };
+
+  return jwt.sign(payload, secretKey, options);
+};
 
 // POST route for sign-up with email
 router.post(
@@ -63,17 +79,14 @@ router.post(
 
       await newUser.save();
 
-      // Set session data
-      req.session.trySession = true;
-      req.session.createdAt = new Date();
-      req.session.userId = user.uid;
-      req.session.type = type;
+      const token = generateToken(newUser);
 
       res.status(200).json({
         message: 'User created successfully!',
+        token, // Return the JWT
         user: {
-          uid: req.session.userId,
-          email: user.email,
+          uid: newUser.uid,
+          email: newUser.email,
         },
       });
     } catch (error) {
@@ -104,13 +117,16 @@ router.post('/sign-up-google', async (req, res) => {
 
       await newUser.save();
 
-      // Set session data
-      req.session.trySession = true;
-      req.session.createdAt = new Date();
-      req.session.userId = uid;
-      req.session.type = type;
+      const token = generateToken(newUser);
 
-      res.status(200).send('User created successfully');
+      res.status(200).json({
+        message: 'User created successfully!',
+        token, // Return the JWT
+        user: {
+          uid: newUser.uid,
+          email: newUser.email,
+        },
+      });
     } catch (err) {
       res.status(500).send(err);
     }
@@ -121,26 +137,26 @@ router.post('/sign-up-google', async (req, res) => {
 
 // GET route for authentication status
 router.post('/auth/status', async (req, res) => {
-  console.log('Session data:', req.session);
-  console.log(req.session)
+  // Verify token from header
+  const authHeader = req.headers.authorization;
 
-  if (req.session.trySession) {
-    console.log('User authenticated:', {
-      userId: req.session.userId,
-      type: req.session.type,
-    });
+  if (authHeader) {
+    const token = authHeader.split(' ')[1]; // Extract the token (format: "Bearer <token>")
 
-    return res.status(200).json({
-      loggedIn: true,
-      userId: req.session.userId,
-      type: req.session.type,
+    jwt.verify(token, process.env.JWT_SECRET_KEY || 'your-default-secret-key', (err, user) => {
+      if (err) {
+        return res.status(403).json({ success: false, message: 'Invalid token' });
+      }
+
+      req.user = user; // Attach user information to the request
+      return res.status(200).json({
+        loggedIn: true,
+        userId: user.uid,
+        type: user.type,
+      });
     });
   } else {
-    console.log('No active session found');
-    return res.status(401).json({
-      success: false,
-      message: 'No active session found',
-    });
+    return res.status(401).json({ success: false, message: 'No token provided' });
   }
 });
 
@@ -155,14 +171,11 @@ router.post(
       const user = await GoogleUser.findOne({ uid: uid });
 
       if (user) {
-        // Set session data
-        req.session.trySession = true;
-        req.session.createdAt = new Date();
-        req.session.userId = user.uid;
-        req.session.type = user.type;
+        const token = generateToken(user);
 
         res.status(200).json({
           message: 'User logged in successfully',
+          token, // Return the JWT
           user: {
             uid: user.uid,
             email: user.email,
@@ -207,14 +220,11 @@ router.post(
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (isPasswordValid) {
-          // Set session data
-          req.session.trySession = true;
-          req.session.createdAt = new Date();
-          req.session.userId = user.uid;
-          req.session.type = user.type;
+          const token = generateToken(user);
 
           res.status(200).json({
             message: 'User logged in successfully',
+            token, // Return the JWT
             user: {
               uid: user.uid,
               email: user.email,
