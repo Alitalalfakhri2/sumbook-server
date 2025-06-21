@@ -28,6 +28,7 @@ const auth = getAuth(app);
 
 // Function to generate JWT
 const generateToken = (user) => {
+  console.log(user)
   const payload = {
     uid: user.uid,
     email: user.email,
@@ -145,7 +146,6 @@ router.get('/auth/status', async (req, res) => {
 
     jwt.verify(token, 'skfodsanianauo', (err, user) => {
       if (err) {
-        console.error('Token verification failed:', err , process.env.JWT_SECRET_KEY)
         return res.status(403).json({ success: false, message: 'Invalid token' });
       }
 
