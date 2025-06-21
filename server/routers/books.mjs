@@ -8,7 +8,13 @@ router.get("/api/books", async (req, res) => {
   const books = await Book.find();
   res.json(books);
 });
-
+router.get('/api/book/:id',async (req,res) => {
+  const id = req.params.id;
+  const book =await  Book.findOne({id:id})
+  res.json(book)
+  
+  
+})
 async function findBooks(query){
   const books = await Book.find({ name: { $regex: query, $options: 'i' } });
   return books

@@ -28,7 +28,7 @@ const auth = getAuth(app);
 
 // Function to generate JWT
 const generateToken = (user) => {
-  console.log(user)
+  
   const payload = {
     uid: user.uid,
     email: user.email,
@@ -139,7 +139,7 @@ router.post('/sign-up-google', async (req, res) => {
 router.get('/auth/status', async (req, res) => {
   // Verify token from header
   const authHeader = req.headers.authorization;
-  console.log(authHeader)
+  
 
   if (authHeader) {
     const token = authHeader.split(' ')[1]; // Extract the token (format: "Bearer <token>")
