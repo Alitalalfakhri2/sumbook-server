@@ -33,8 +33,7 @@ const generateToken = (user) => {
     email: user.email,
     type: user.type,
   };
-
-  const secretKey = process.env.JWT_SECRET_KEY || 'your-default-secret-key'; // Use a strong, randomly generated secret key
+  const secretKey = 'skfodsanianauo';
   const options = {
     expiresIn: '1h', // Token expiration time
   };
@@ -136,15 +135,17 @@ router.post('/sign-up-google', async (req, res) => {
 });
 
 // GET route for authentication status
-router.post('/auth/status', async (req, res) => {
+router.get('/auth/status', async (req, res) => {
   // Verify token from header
   const authHeader = req.headers.authorization;
+  console.log(authHeader)
 
   if (authHeader) {
     const token = authHeader.split(' ')[1]; // Extract the token (format: "Bearer <token>")
 
-    jwt.verify(token, process.env.JWT_SECRET_KEY || 'your-default-secret-key', (err, user) => {
+    jwt.verify(token, 'skfodsanianauo', (err, user) => {
       if (err) {
+        console.error('Token verification failed:', err , process.env.JWT_SECRET_KEY)
         return res.status(403).json({ success: false, message: 'Invalid token' });
       }
 
