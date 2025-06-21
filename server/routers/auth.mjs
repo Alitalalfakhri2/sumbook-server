@@ -34,7 +34,7 @@ const generateToken = (user) => {
     email: user.email,
     type: user.type,
   };
-  const secretKey = 'skfodsanianauo';
+  const secretKey = process.env.JWT_SECRET_KEY;
   const options = {
     expiresIn: '1h', // Token expiration time
   };
@@ -144,7 +144,7 @@ router.get('/auth/status', async (req, res) => {
   if (authHeader) {
     const token = authHeader.split(' ')[1]; // Extract the token (format: "Bearer <token>")
 
-    jwt.verify(token, 'skfodsanianauo', (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
       if (err) {
         return res.status(403).json({ success: false, message: 'Invalid token' });
       }
